@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>📱 PhantomDroid-Py — Clase Cátedra</title>
+<style>
+  /* ═══════════════ RESET & BASE ═══════════════ */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0d1117;
+    --bg2:       #161b22;
+    --bg3:       #21262d;
+    --border:    #30363d;
+    --green:     #39d353;
+    --green-dim: #26a641;
+    --red:       #ff4757;
+    --yellow:    #ffd700;
+    --cyan:      #00d4ff;
+    --purple:    #bd93f9;
+    --blue:      #58a6ff;
+    --text:      #e6edf3;
+    --text-dim:  #8b949e;
+    --radius:    10px;
+    --font-mono: "Courier New", Courier, monospace;
+    --font-ui:   "Segoe UI", system-ui, sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-ui);
+    line-height: 1.7;
+    font-size: 16px;
+  }
+
+  a { color: var(--blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* ═══════════════ HERO ═══════════════ */
+  .hero {
+    background: linear-gradient(160deg, #0d1117 0%, #1a0a2e 50%, #0d1117 100%);
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+    padding: 70px 24px 60px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: "";
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(57,211,83,.08), transparent);
+    pointer-events: none;
+  }
+  .hero-badge {
+    display: inline-flex; gap: 10px; flex-wrap: wrap;
+    justify-content: center; margin-bottom: 22px;
+  }
+  .badge {
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: .78rem;
+    font-weight: 600;
+    letter-spacing: .05em;
+    border: 1px solid;
+  }
+  .badge-green  { color: var(--green);  border-color: var(--green);  background: rgba(57,211,83,.08); }
+  .badge-cyan   { color: var(--cyan);   border-color: var(--cyan);   background: rgba(0,212,255,.08); }
+  .badge-purple { color: var(--purple); border-color: var(--purple); background: rgba(189,147,249,.08); }
+  .badge-yellow { color: var(--yellow); border-color: var(--yellow); background: rgba(255,215,0,.08); }
+  .badge-red    { color: var(--red);    border-color: var(--red);    background: rgba(255,71,87,.08); }
+
+  .hero h1 {
+    font-size: clamp(2rem, 5vw, 3.4rem);
+    font-weight: 800;
+    background: linear-gradient(90deg, var(--green), var(--cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 14px;
+  }
+  .hero p {
+    color: var(--text-dim);
+    font-size: 1.05rem;
+    margin-bottom: 8px;
+  }
+
+  /* ═══════════════ LAYOUT ═══════════════ */
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  .page-body {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 0;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ═══════════════ SIDEBAR ═══════════════ */
+  .sidebar {
+    position: sticky;
+    top: 24px;
+    height: fit-content;
+    padding: 28px 0 28px 0;
+    border-right: 1px solid var(--border);
+    padding-right: 24px;
+    margin-right: 40px;
+  }
+  .sidebar h3 {
+    font-size: .75rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .sidebar ul { list-style: none; }
+  .sidebar ul li { margin-bottom: 4px; }
+  .sidebar ul li a {
+    display: block;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: .88rem;
+    color: var(--text-dim);
+    border-left: 2px solid transparent;
+    transition: all .2s;
+  }
+  .sidebar ul li a:hover,
+  .sidebar ul li a.active {
+    color: var(--green);
+    background: rgba(57,211,83,.07);
+    border-left-color: var(--green);
+    text-decoration: none;
+  }
+  .sidebar .sub { padding-left: 16px !important; font-size: .82rem !important; }
+
+  /* ═══════════════ MAIN CONTENT ═══════════════ */
+  .content { padding: 40px 0; }
+
+  section { margin-bottom: 64px; }
+
+  h2 {
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: var(--text);
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 28px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  h2 .num {
+    display: inline-flex;
+    align-items: center; justify-content: center;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--green);
+    color: #000;
+    font-size: .85rem;
+    font-weight: 900;
+    flex-shrink: 0;
+  }
+
+  h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--cyan);
+    margin: 28px 0 12px;
+  }
+
+  p { margin-bottom: 14px; color: var(--text); }
+
+  /* ═══════════════ CODE BLOCKS ═══════════════ */
+  .code-wrap {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin: 18px 0;
+    overflow: hidden;
+  }
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+    font-size: .8rem;
+    color: var(--text-dim);
+  }
+  .code-header .lang {
+    font-weight: 600;
+    color: var(--green);
+    font-family: var(--font-mono);
+  }
+  .copy-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    border-radius: 5px;
+    padding: 2px 10px;
+    font-size: .75rem;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .copy-btn:hover { color: var(--green); border-color: var(--green); }
+  .copy-btn.copied { color: var(--green); border-color: var(--green); }
+
+  pre {
+    padding: 20px;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: .85rem;
+    line-height: 1.6;
+    tab-size: 4;
+  }
+
+  code {
+    font-family: var(--font-mono);
+    background: var(--bg3);
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: .85em;
+    color: var(--green);
+  }
+  pre code {
+    background: none;
+    padding: 0;
+    font-size: inherit;
+    color: inherit;
+  }
+
+  /* Syntax coloring */
+  .kw   { color: #ff79c6; font-weight: 600; }   /* keywords */
+  .fn   { color: #50fa7b; }                      /* functions */
+  .st   { color: #f1fa8c; }                      /* strings */
+  .cm   { color: #6272a4; font-style: italic; }  /* comments */
+  .nb   { color: #ffb86c; }                      /* numbers/builtins */
+  .cl   { color: #8be9fd; }                      /* class names */
+  .op   { color: #ff79c6; }                      /* operators */
+
+  /* ═══════════════ CALLOUTS ═══════════════ */
+  .callout {
+    border-left: 4px solid;
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 16px 20px;
+    margin: 20px 0;
+    background: var(--bg2);
+  }
+  .callout-info    { border-color: var(--cyan);   }
+  .callout-warn    { border-color: var(--yellow); }
+  .callout-danger  { border-color: var(--red);    }
+  .callout-success { border-color: var(--green);  }
+  .callout-title {
+    font-weight: 700;
+    margin-bottom: 6px;
+    font-size: .9rem;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .callout-info   .callout-title { color: var(--cyan);   }
+  .callout-warn   .callout-title { color: var(--yellow); }
+  .callout-danger .callout-title { color: var(--red);    }
+  .callout-success .callout-title { color: var(--green); }
+
+  /* ═══════════════ DIAGRAMA ═══════════════ */
+  .diagram {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px 24px;
+    margin: 24px 0;
+    text-align: center;
+    overflow-x: auto;
+  }
+  .flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .flow-box {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-size: .85rem;
+    font-family: var(--font-mono);
+    color: var(--text);
+    min-width: 120px;
+    text-align: center;
+    transition: border-color .2s, transform .2s;
+    cursor: default;
+  }
+  .flow-box:hover { border-color: var(--green); transform: translateY(-2px); }
+  .flow-box.highlight { border-color: var(--green); color: var(--green); }
+  .flow-box.warn { border-color: var(--yellow); color: var(--yellow); }
+  .flow-box.info { border-color: var(--cyan); color: var(--cyan); }
+  .arrow { color: var(--text-dim); font-size: 1.4rem; }
+
+  /* ═══════════════ TABLA DE MÓDULOS ═══════════════ */
+  .mod-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: .9rem;
+  }
+  .mod-table th {
+    background: var(--bg3);
+    padding: 10px 16px;
+    text-align: left;
+    color: var(--text-dim);
+    font-weight: 600;
+    font-size: .8rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    border-bottom: 1px solid var(--border);
+  }
+  .mod-table td {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .mod-table tr:last-child td { border-bottom: none; }
+  .mod-table tr:hover td { background: var(--bg2); }
+  .mod-name { font-family: var(--font-mono); color: var(--green); font-size: .85rem; }
+  .mod-desc { color: var(--text-dim); }
+
+  /* ═══════════════ MENÚ VISUAL ═══════════════ */
+  .menu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+    margin: 24px 0;
+  }
+  .menu-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    transition: border-color .2s;
+  }
+  .menu-card:hover { border-color: var(--green); }
+  .menu-card h4 {
+    color: var(--green);
+    font-size: .85rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .menu-item {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin-bottom: 6px;
+    font-size: .85rem;
+  }
+  .menu-num {
+    color: var(--green);
+    font-family: var(--font-mono);
+    font-weight: 700;
+    min-width: 28px;
+    font-size: .8rem;
+  }
+  .menu-label { color: var(--text-dim); }
+
+  /* ═══════════════ PROGRESS STEPPER ═══════════════ */
+  .steps { margin: 24px 0; }
+  .step {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .step-num {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: var(--green);
+    color: #000;
+    font-weight: 900;
+    font-size: .9rem;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .step-body h4 { font-size: 1rem; color: var(--text); margin-bottom: 4px; }
+  .step-body p  { font-size: .9rem; color: var(--text-dim); margin: 0; }
+
+  /* ═══════════════ INTERACTIVE QUIZ ═══════════════ */
+  .quiz { margin: 28px 0; }
+  .quiz-q {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+  .quiz-q p { font-weight: 600; margin-bottom: 14px; }
+  .quiz-options { display: flex; flex-direction: column; gap: 8px; }
+  .quiz-opt {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 10px 16px;
+    font-size: .88rem;
+    cursor: pointer;
+    transition: all .2s;
+    text-align: left;
+    color: var(--text);
+    width: 100%;
+  }
+  .quiz-opt:hover { border-color: var(--cyan); color: var(--cyan); }
+  .quiz-opt.correct { border-color: var(--green) !important; background: rgba(57,211,83,.12); color: var(--green); }
+  .quiz-opt.wrong   { border-color: var(--red) !important;   background: rgba(255,71,87,.12);  color: var(--red); }
+  .quiz-feedback {
+    margin-top: 10px;
+    font-size: .88rem;
+    display: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+  }
+  .quiz-feedback.show { display: block; }
+  .quiz-feedback.ok  { background: rgba(57,211,83,.1);  color: var(--green); }
+  .quiz-feedback.bad { background: rgba(255,71,87,.1);  color: var(--red); }
+
+  /* ═══════════════ FOOTER ═══════════════ */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 32px 24px;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: .85rem;
+    margin-top: 40px;
+  }
+  footer span { color: var(--green); }
+
+  /* ═══════════════ RESPONSIVE ═══════════════ */
+  @media (max-width: 768px) {
+    .page-body { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .flow { flex-direction: column; }
+    .arrow { transform: rotate(90deg); }
+  }
+
+  /* ═══════════════ SCROLL PROGRESS ═══════════════ */
+  #progress-bar {
+    position: fixed;
+    top: 0; left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--green), var(--cyan));
+    width: 0%;
+    z-index: 9999;
+    transition: width .1s;
+  }
+</style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+
+<!-- ══════════════════════ HERO ══════════════════════ -->
+<header class="hero">
+  <div class="hero-badge">
+    <span class="badge badge-green">Python 3.7+</span>
+    <span class="badge badge-cyan">ADB</span>
+    <span class="badge badge-purple">scrcpy</span>
+    <span class="badge badge-yellow">threading</span>
+    <span class="badge badge-red">subprocess</span>
+  </div>
+  <h1>📱 PhantomDroid-Py</h1>
+  <p>Clase Cátedra — Controlador Autónomo de Android</p>
+  <p style="color:var(--text-dim); font-size:.9rem;">
+    Nivel: Programación Intermedia &nbsp;|&nbsp; 54 comandos ADB &nbsp;|&nbsp; Conexión WiFi automática
+  </p>
+</header>
+
+<div class="page-body">
+
+  <!-- ══════════════ SIDEBAR ══════════════ -->
+  <aside class="sidebar">
+    <h3>📋 Índice</h3>
+    <ul id="toc">
+      <li><a href="#sec1">1. ¿Qué construimos?</a></li>
+      <li><a href="#sec2">2. Conceptos previos</a></li>
+      <li><a href="#sec3">3. Dependencias</a></li>
+      <li><a href="#sec4">4. Arquitectura</a></li>
+      <li><a href="#sec5">5. Núcleo ADB</a></li>
+      <li><a class="sub" href="#sec5a">— run_adb()</a></li>
+      <li><a class="sub" href="#sec5b">— get_devices()</a></li>
+      <li><a class="sub" href="#sec5c">— get_device_ip()</a></li>
+      <li><a href="#sec6">6. Conexión WiFi automática</a></li>
+      <li><a href="#sec7">7. Watcher de dispositivos</a></li>
+      <li><a href="#sec8">8. El menú (54 opciones)</a></li>
+      <li><a href="#sec9">9. scrcpy — espejo sin lag</a></li>
+      <li><a href="#sec10">10. Flujo completo</a></li>
+      <li><a href="#sec11">11. Cómo ejecutarlo</a></li>
+      <li><a href="#sec12">12. Cuestionario</a></li>
+    </ul>
+  </aside>
+
+  <!-- ══════════════ CONTENIDO ══════════════ -->
+  <main class="content">
+
+    <!-- 1 -->
+    <section id="sec1">
+      <h2><span class="num">1</span>¿Qué construimos?</h2>
+      <p>
+        <strong>PhantomDroid-Py</strong> es un script de Python que convierte tu PC en un
+        <em>centro de control total</em> de cualquier dispositivo Android, sin apps de terceros
+        y sin root. Todo se apoya en <strong>ADB</strong> (Android Debug Bridge), la herramienta
+        oficial de Google que ya viene instalada junto a Android Studio.
+      </p>
+      <p>
+        El script detecta automáticamente el celular al enchufarlo por USB, obtiene su IP WiFi,
+        configura ADB en modo inalámbrico y — lo más importante — te avisa que ya puedes
+        <strong>desconectar el cable</strong>. A partir de ese momento controlas el celular
+        enteramente por WiFi con latencia mínima.
+      </p>
+      <div class="callout callout-success">
+        <div class="callout-title">✅ Resultado final</div>
+        Un panel interactivo con 54 opciones: gestión de dispositivo, apps, archivos,
+        monitoreo del sistema, espejo de pantalla en tiempo real y administración WiFi.
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="sec2">
+      <h2><span class="num">2</span>Conceptos previos</h2>
+
+      <h3>¿Qué es ADB?</h3>
+      <p>
+        ADB (Android Debug Bridge) es una herramienta de línea de comandos que forma parte del
+        SDK de Android. Permite comunicación directa entre la PC y el dispositivo Android por
+        USB o TCP/IP. Funciona con un modelo cliente-servidor:
+      </p>
+      <div class="diagram">
+        <div class="flow">
+          <div class="flow-box highlight">Tu script<br/><small>cliente</small></div>
+          <div class="arrow">→</div>
+          <div class="flow-box info">Servidor ADB<br/><small>puerto 5037</small></div>
+          <div class="arrow">→</div>
+          <div class="flow-box warn">Demonio en el celular<br/><small>adbd</small></div>
+        </div>
+      </div>
+
+      <h3>¿Qué es scrcpy?</h3>
+      <p>
+        scrcpy (Screen Copy) es una aplicación de código abierto creada por Genymobile que
+        transmite y controla la pantalla de Android en tiempo real. Utiliza H.264/H.265 para
+        comprimir el video, logrando <strong>latencia de 35–70ms</strong> — prácticamente
+        sin lag perceptible.
+      </p>
+
+      <h3>Modelo de threading de Python</h3>
+      <p>
+        El script usa un <strong>hilo de fondo</strong> (daemon thread) para vigilar
+        continuamente los dispositivos USB sin bloquear el menú principal. Cuando detecta
+        uno nuevo, actúa automáticamente.
+      </p>
+      <div class="callout callout-info">
+        <div class="callout-title">ℹ️ Dato clave</div>
+        Un <em>daemon thread</em> se destruye automáticamente cuando el programa principal
+        termina, por eso es ideal para tareas de monitoreo en segundo plano.
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="sec3">
+      <h2><span class="num">3</span>Dependencias</h2>
+      <table class="mod-table">
+        <thead>
+          <tr>
+            <th>Módulo / Herramienta</th>
+            <th>Tipo</th>
+            <th>Función en el proyecto</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="mod-name">subprocess</span></td>
+            <td><span class="badge badge-cyan">stdlib</span></td>
+            <td class="mod-desc">Ejecuta comandos ADB desde Python y captura su salida</td>
+          </tr>
+          <tr>
+            <td><span class="mod-name">threading</span></td>
+            <td><span class="badge badge-cyan">stdlib</span></td>
+            <td class="mod-desc">Hilo de fondo para detección automática de dispositivos</td>
+          </tr>
+          <tr>
+            <td><span class="mod-name">re</span></td>
+            <td><span class="badge badge-cyan">stdlib</span></td>
+            <td class="mod-desc">Expresiones regulares para extraer IPs de la salida de ADB</td>
+          </tr>
+          <tr>
+            <td><span class="mod-name">os / sys / shutil / time</span></td>
+            <td><span class="badge badge-cyan">stdlib</span></td>
+            <td class="mod-desc">Manejo de archivos, limpieza de pantalla, pausas</td>
+          </tr>
+          <tr>
+            <td><span class="mod-name">rich</span></td>
+            <td><span class="badge badge-purple">pip</span></td>
+            <td class="mod-desc">UI de terminal con colores, tablas, paneles y prompts</td>
+          </tr>
+          <tr>
+            <td><span class="mod-name">ADB</span></td>
+            <td><span class="badge badge-red">externo</span></td>
+            <td class="mod-desc">Android Debug Bridge — el puente de comunicación con el celular</td>
+          </tr>
+          <tr>
+            <td><span class="mod-name">scrcpy</span></td>
+            <td><span class="badge badge-red">externo</span></td>
+            <td class="mod-desc">Espejo de pantalla y grabación en tiempo real sin lag</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Auto-instalación de <code>rich</code></h3>
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="lang">python — _auto_install()</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+        </div>
+        <pre><code><span class="kw">def</span> <span class="fn">_auto_install</span>():
+    <span class="cm"># Busca si 'rich' ya está instalado usando importlib</span>
+    missing = [pkg <span class="kw">for</span> pkg <span class="kw">in</span> (<span class="st">"rich"</span>,)
+               <span class="kw">if not</span> __import__(<span class="st">"importlib"</span>).util.find_spec(pkg)]
+    <span class="kw">if</span> missing:
+        <span class="cm"># Si falta, lo instala silenciosamente con pip</span>
+        subprocess.<span class="fn">run</span>([sys.executable, <span class="st">"-m"</span>, <span class="st">"pip"</span>, <span class="st">"install"</span>]
+                      + missing + [<span class="st">"-q"</span>])
+
+<span class="fn">_auto_install</span>()  <span class="cm"># Se llama inmediatamente al importar el módulo</span></code></pre>
+      </div>
+      <p>
+        Esta función corre <em>antes</em> de cualquier <code>import rich</code>, así que si
+        el módulo no está, se instala automáticamente en esa misma sesión.
+      </p>
+    </section>
+
+    <!-- 4 -->
+    <section id="sec4">
+      <h2><span class="num">4</span>Arquitectura general</h2>
+      <p>El proyecto tiene <strong>5 capas</strong> bien definidas:</p>
+
+      <div class="diagram">
+        <div class="flow" style="flex-direction:column; gap:4px;">
+          <div class="flow-box highlight" style="width:360px;">Capa 5 — UI / Menú interactivo (rich)</div>
+          <div class="arrow" style="transform:rotate(90deg)">↓</div>
+          <div class="flow-box info" style="width:360px;">Capa 4 — Comandos (54 funciones cmd_*)</div>
+          <div class="arrow" style="transform:rotate(90deg)">↓</div>
+          <div class="flow-box warn" style="width:360px;">Capa 3 — Watcher de dispositivos (threading)</div>
+          <div class="arrow" style="transform:rotate(90deg)">↓</div>
+          <div class="flow-box" style="width:360px;">Capa 2 — Núcleo ADB (run_adb, setup_wireless)</div>
+          <div class="arrow" style="transform:rotate(90deg)">↓</div>
+          <div class="flow-box" style="width:360px; border-color:var(--red); color:var(--red)">Capa 1 — ADB / scrcpy (binarios del sistema)</div>
+        </div>
+      </div>
+
+      <h3>Variables de estado global</h3>
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="lang">python — estado de la sesión</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+        </div>
+        <pre><code>VERSION           = <span class="st">"1.0"</span>
+ADB_PORT          = <span class="nb">5555</span>       <span class="cm"># Puerto TCP que usa ADB WiFi</span>
+POLLING_INTERVAL  = <span class="nb">2</span>          <span class="cm"># Segundos entre escaneos del watcher</span>
+
+current_device:    Optional[<span class="cl">str</span>] = <span class="kw">None</span>   <span class="cm"># "IP:5555" o "serial USB"</span>
+wireless_connected: <span class="cl">bool</span>         = <span class="kw">False</span>  <span class="cm"># ¿Estamos en modo WiFi?</span>
+_stop_event = threading.<span class="fn">Event</span>()            <span class="cm"># Señal para detener el watcher</span></code></pre>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="sec5">
+      <h2><span class="num">5</span>Núcleo ADB</h2>
+
+      <h3 id="sec5a">run_adb() — la función base</h3>
+      <p>
+        Toda la comunicación con ADB pasa por una única función. Esto evita duplicar
+        código de manejo de errores en las 54 operaciones del menú.
+      </p>
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="lang">python — run_adb()</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+        </div>
+        <pre><code><span class="kw">def</span> <span class="fn">run_adb</span>(*args, device: <span class="cl">str</span> = <span class="kw">None</span>, timeout: <span class="cl">int</span> = <span class="nb">30</span>) -> Tuple[<span class="cl">bool</span>, <span class="cl">str</span>]:
+    cmd = [<span class="st">"adb"</span>]
+    <span class="kw">if</span> device:
+        cmd += [<span class="st">"-s"</span>, device]   <span class="cm"># selecciona un device específico</span>
+    cmd += list(args)
+
+    <span class="kw">try</span>:
+        r = subprocess.<span class="fn">run</span>(
+            cmd, capture_output=<span class="kw">True</span>, text=<span class="kw">True</span>,
+            timeout=timeout, encoding=<span class="st">"utf-8"</span>, errors=<span class="st">"replace"</span>
+        )
+        <span class="kw">return</span> r.returncode == <span class="nb">0</span>, (r.stdout + r.stderr).strip()
+
+    <span class="kw">except</span> subprocess.<span class="cl">TimeoutExpired</span>:
+        <span class="kw">return False</span>, <span class="st">"Timeout: el comando tardó demasiado."</span>
+    <span class="kw">except</span> <span class="cl">FileNotFoundError</span>:
+        <span class="kw">return False</span>, <span class="st">"ADB no encontrado en el PATH."</span></code></pre>
+      </div>
+      <div class="callout callout-warn">
+        <div class="callout-title">⚠️ Patrón importante</div>
+        La función devuelve una <strong>tupla <code>(bool, str)</code></strong>: el primer
+        valor indica éxito/fallo y el segundo es la salida del comando. Todas las funciones
+        del script usan esta convención.
+      </div>
+
+      <h3 id="sec5b">get_devices() — detectar celulares</h3>
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="lang">python — get_devices()</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+        </div>
+        <pre><code><span class="kw">def</span> <span class="fn">get_devices</span>() -> List[dict]:
+    ok, out = <span class="fn">run_adb</span>(<span class="st">"devices"</span>, <span class="st">"-l"</span>)
+    <span class="kw">if not</span> ok: <span class="kw">return</span> []
+
+    <span class="cm"># Salida de 'adb devices -l':</span>
+    <span class="cm"># List of devices attached</span>
+    <span class="cm"># R58MA18PJZX  device  model:SM_A52s  ← USB</span>
+    <span class="cm"># 192.168.1.5:5555  device            ← WiFi</span>
+
+    devices = []
+    <span class="kw">for</span> line <span class="kw">in</span> out.splitlines()[<span class="nb">1</span>:]:   <span class="cm"># saltar cabecera</span>
+        parts = line.split()
+        <span class="kw">if</span> len(parts) >= <span class="nb">2</span> <span class="kw">and</span> parts[<span class="nb">1</span>] <span class="kw">in</span> (<span class="st">"device"</span>, <span class="st">"offline"</span>, <span class="st">"unauthorized"</span>):
+            devices.<span class="fn">append</span>({
+                <span class="st">"serial"</span>:   parts[<span class="nb">0</span>],
+                <span class="st">"status"</span>:   parts[<span class="nb">1</span>],
+                <span class="st">"wireless"</span>: <span class="st">":"</span> <span class="kw">in</span> parts[<span class="nb">0</span>],  <span class="cm"># IP:puerto → es WiFi</span>
+            })
+    <span class="kw">return</span> devices</code></pre>
+      </div>
+
+      <h3 id="sec5c">get_device_ip() — 3 métodos de fallback</h3>
+      <p>
+        No todos los Android responden de la misma manera. Por eso se usan 3 comandos
+        distintos en orden, usando el primero que funcione:
+      </p>
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="lang">python — get_device_ip() simplificado</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+        </div>
+        <pre><code><span class="kw">def</span> <span class="fn">get_device_ip</span>(serial: <span class="cl">str</span>) -> Optional[<span class="cl">str</span>]:
+    <span class="cm"># Método 1: ip route → busca "src 192.168.x.x"</span>
+    ok, out = <span class="fn">run_adb</span>(<span class="st">"shell"</span>, <span class="st">"ip"</span>, <span class="st">"route"</span>, device=serial)
+    <span class="kw">if</span> ok:
+        m = re.<span class="fn">search</span>(<span class="st">r"src\s+([\d.]+)"</span>, out)
+        <span class="kw">if</span> m: <span class="kw">return</span> m.<span class="fn">group</span>(<span class="nb">1</span>)
+
+    <span class="cm"># Método 2: ip addr show wlan0 → busca "inet 192.168.x.x/24"</span>
+    ok, out = <span class="fn">run_adb</span>(<span class="st">"shell"</span>, <span class="st">"ip"</span>, <span class="st">"addr"</span>, <span class="st">"show"</span>, <span class="st">"wlan0"</span>, device=serial)
+    <span class="kw">if</span> ok:
+        m = re.<span class="fn">search</span>(<span class="st">r"inet\s+([\d.]+)/"</span>, out)
+        <span class="kw">if</span> m: <span class="kw">return</span> m.<span class="fn">group</span>(<span class="nb">1</span>)
+
+    <span class="cm"># Método 3: ifconfig wlan0 (Android antiguo)</span>
+    ok, out = <span class="fn">run_adb</span>(<span class="st">"shell"</span>, <span class="st">"ifconfig"</span>, <span class="st">"wlan0"</span>, device=serial)
+    <span class="kw">if</span> ok:
+        m = re.<span class="fn">search</span>(<span class="st">r"inet(?:\s+addr:)?\s*([\d.]+)"</span>, out)
+        <span class="kw">if</span> m <span class="kw">and not</span> m.<span class="fn">group</span>(<span class="nb">1</span>).<span class="fn">startswith</span>(<span class="st">"127"</span>):
+            <span class="kw">return</span> m.<span class="fn">group</span>(<span class="nb">1</span>)
+
+    <span class="kw">return None</span>  <span class="cm"># No se pudo obtener IP</span></code></pre>
+      </div>
+    </section>
+
+    <!-- 6 -->
+    <section id="sec6">
+      <h2><span class="num">6</span>Conexión WiFi automática</h2>
+      <p>
+        La función <code>setup_wireless_adb()</code> orquesta el proceso completo para
+        pasar de USB a WiFi en 3 pasos:
+      </p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h4>Obtener IP del celular</h4>
+            <p>Llama a <code>get_device_ip()</code> por USB antes de cambiar el modo de ADB.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h4><code>adb tcpip 5555</code></h4>
+            <p>Reinicia el demonio ADB del celular en modo TCP en el puerto 5555. Requiere conexión USB activa.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h4><code>adb connect IP:5555</code></h4>
+            <p>Establece la conexión WiFi. Después de esto, el cable ya no es necesario.</p>
+          </div>
+        </div>
+      </div>
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="lang">python — setup_wireless_adb()</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+        </div>
+        <pre><code><span class="kw">def</span> <span class="fn">setup_wireless_adb</span>(serial: <span class="cl">str</span>) -> Tuple[<span class="cl">bool</span>, <span class="cl">str</span>]:
+    ip = <span class="fn">get_device_ip</span>(serial)
+    <span class="kw">if not</span> ip:
+        <span class="kw">return False</span>, <span class="st">"No se obtuvo IP. ¿Conectado a WiFi?"</span>
+
+    ok, out = <span class="fn">run_adb</span>(<span class="st">"tcpip"</span>, <span class="st">"5555"</span>, device=serial)
+    <span class="kw">if not</span> ok:
+        <span class="kw">return False</span>, f<span class="st">"Error tcpip: {out}"</span>
+
+    time.<span class="fn">sleep</span>(<span class="nb">1.5</span>)  <span class="cm"># el demonio necesita ~1s para reiniciarse</span>
+
+    ok, out = <span class="fn">run_adb</span>(<span class="st">"connect"</span>, f<span class="st">"{ip}:5555"</span>)
+    <span class="kw">if not</span> ok <span class="kw">or</span> <span class="st">"failed"</span> <span class="kw">in</span> out.lower():
+        <span class="kw">return False</span>, f<span class="st">"Error al conectar: {out}"</span>
+
+    <span class="kw">return True</span>, f<span class="st">"{ip}:5555"</span>   <span class="cm"># éxito, devuelve "ip:puerto"</span></code></pre>
+      </div>
+      <div class="callout callout-info">
+        <div class="callout-title">ℹ️ ¿Por qué el sleep(1.5)?</div>
+        Cuando ADB cambia de modo USB a TCP, el demonio <code>adbd</code> en el celular se
+        reinicia. Si intentamos conectar antes de que termine, la conexión falla. 1.5 segundos
+        es suficiente en la mayoría de dispositivos.
+      </div>
+    </section>
+
+    <!-- 7 -->
+    <section id="sec7">
+      <h2><span class="num">7</span>Watcher — detección automática</h2>
+      <p>
+        El <strong>watcher</strong> es un hilo de fondo que se ejecuta durante toda la sesión.
+        Cada 2 segundos compara el conjunto de dispositivos USB conectados con los que
+        conocía antes. Si detecta uno nuevo, actúa automáticamente.
+      </p>
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="lang">python — _device_watcher()</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+        </div>
+        <pre><code><span class="kw">def</span> <span class="fn">_device_watcher</span>():
+    known_usb: <span class="cl">set</span> = <span class="fn">set</span>()  <span class="cm"># seriales que ya conocemos</span>
+
+    <span class="kw">while not</span> _stop_event.<span class="fn">is_set</span>():
+        devices    = <span class="fn">get_devices</span>()
+        <span class="cm"># Solo los USB que están "online"</span>
+        usb_online = {d[<span class="st">"serial"</span>] <span class="kw">for</span> d <span class="kw">in</span> devices
+                      <span class="kw">if not</span> d[<span class="st">"wireless"</span>] <span class="kw">and</span> d[<span class="st">"status"</span>] == <span class="st">"device"</span>}
+
+        <span class="cm"># Diferencia = dispositivos que aparecieron ahora</span>
+        new_devices = usb_online - known_usb
+
+        <span class="kw">for</span> serial <span class="kw">in</span> new_devices:
+            ok, result = <span class="fn">setup_wireless_adb</span>(serial)
+            <span class="kw">if</span> ok:
+                <span class="cm"># Actualiza el estado global de la sesión</span>
+                current_device    = result
+                wireless_connected = <span class="kw">True</span>
+
+        known_usb = usb_online
+        _stop_event.<span class="fn">wait</span>(POLLING_INTERVAL)  <span class="cm"># espera 2s o hasta señal de stop</span></code></pre>
+      </div>
+
+      <h3>Cómo se lanza el hilo</h3>
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="lang">python — main()</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+        </div>
+        <pre><code>watcher = threading.<span class="fn">Thread</span>(
+    target=_device_watcher,
+    daemon=<span class="kw">True</span>,          <span class="cm"># muere solo cuando termina el main</span>
+    name=<span class="st">"DeviceWatcher"</span>
+)
+watcher.<span class="fn">start</span>()</code></pre>
+      </div>
+    </section>
+
+    <!-- 8 -->
+    <section id="sec8">
+      <h2><span class="num">8</span>El menú — 54 opciones</h2>
+      <p>Todas las funciones siguen el mismo patrón: verifican dispositivo, piden parámetros, ejecutan ADB y muestran resultado.</p>
+
+      <div class="menu-grid">
+        <div class="menu-card">
+          <h4>📱 Device Management (1-9)</h4>
+          <div class="menu-item"><span class="menu-num">1</span><span class="menu-label">Listar dispositivos</span></div>
+          <div class="menu-item"><span class="menu-num">2</span><span class="menu-label">Conectar WiFi</span></div>
+          <div class="menu-item"><span class="menu-num">3</span><span class="menu-label">Desconectar dispositivo</span></div>
+          <div class="menu-item"><span class="menu-num">4</span><span class="menu-label">Info del dispositivo</span></div>
+          <div class="menu-item"><span class="menu-num">5</span><span class="menu-label">Reiniciar ADB</span></div>
+          <div class="menu-item"><span class="menu-num">6</span><span class="menu-label">Verificar conexión</span></div>
+          <div class="menu-item"><span class="menu-num">7</span><span class="menu-label">Ejecutar comando shell</span></div>
+          <div class="menu-item"><span class="menu-num">8</span><span class="menu-label">Ver logs del device</span></div>
+          <div class="menu-item"><span class="menu-num">9</span><span class="menu-label">Reiniciar dispositivo</span></div>
+        </div>
+        <div class="menu-card">
+          <h4>📊 System Monitoring (28-36)</h4>
+          <div class="menu-item"><span class="menu-num">28</span><span class="menu-label">Battery info</span></div>
+          <div class="menu-item"><span class="menu-num">29</span><span class="menu-label">Memory info</span></div>
+          <div class="menu-item"><span class="menu-num">30</span><span class="menu-label">CPU info</span></div>
+          <div class="menu-item"><span class="menu-num">31</span><span class="menu-label">Storage info</span></div>
+          <div class="menu-item"><span class="menu-num">32</span><span class="menu-label">Running processes</span></div>
+          <div class="menu-item"><span class="menu-num">33</span><span class="menu-label">Network info</span></div>
+          <div class="menu-item"><span class="menu-num">34</span><span class="menu-label">System properties</span></div>
+          <div class="menu-item"><span class="menu-num">35</span><span class="menu-label">Apps with size</span></div>
+          <div class="menu-item"><span class="menu-num">36</span><span class="menu-label">Monitor performance</span></div>
+        </div>
+        <div class="menu-card">
+          <h4>📦 App Management (10-18)</h4>
+          <div class="menu-item"><span class="menu-num">10</span><span class="menu-label">Install APK</span></div>
+          <div class="menu-item"><span class="menu-num">11</span><span class="menu-label">Uninstall app</span></div>
+          <div class="menu-item"><span class="menu-num">12</span><span class="menu-label">List packages</span></div>
+          <div class="menu-item"><span class="menu-num">13</span><span class="menu-label">Package info</span></div>
+          <div class="menu-item"><span class="menu-num">14</span><span class="menu-label">Clear app data</span></div>
+          <div class="menu-item"><span class="menu-num">15</span><span class="menu-label">Force stop app</span></div>
+          <div class="menu-item"><span class="menu-num">16</span><span class="menu-label">Start app</span></div>
+          <div class="menu-item"><span class="menu-num">17</span><span class="menu-label">Backup app</span></div>
+          <div class="menu-item"><span class="menu-num">18</span><span class="menu-label">Batch install APKs</span></div>
+        </div>
+        <div class="menu-card">
+          <h4>🗂️ File Operations (19-27)</h4>
+          <div class="menu-item"><span class="menu-num">19</span><span class="menu-label">Take screenshot</span></div>
+          <div class="menu-item"><span class="menu-num">20</span><span class="menu-label">Multiple screenshots</span></div>
+          <div class="menu-item"><span class="menu-num">21</span><span class="menu-label">Record screen (ADB)</span></div>
+          <div class="menu-item"><span class="menu-num">22</span><span class="menu-label">Upload file</span></div>
+          <div class="menu-item"><span class="menu-num">23</span><span class="menu-label">Download file</span></div>
+          <div class="menu-item"><span class="menu-num">24</span><span class="menu-label">List files</span></div>
+          <div class="menu-item"><span class="menu-num">25</span><span class="menu-label">Create folder</span></div>
+          <div class="menu-item"><span class="menu-num">26</span><span class="menu-label">Delete file/folder</span></div>
+          <div class="menu-item"><span class="menu-num">27</span><span class="menu-label">Backup folder</span></div>
+        </div>
+        <div class="menu-card">
+          <h4>🖥️ Screen Sharing (37-45)</h4>
+          <div class="menu-item"><span class="menu-num">37</span><span class="menu-label">Start screen sharing</span></div>
+          <div class="menu-item"><span class="menu-num">38</span><span class="menu-label">Custom screen sharing</span></div>
+          <div class="menu-item"><span class="menu-num">39</span><span class="menu-label">Stop screen sharing</span></div>
+          <div class="menu-item"><span class="menu-num">40</span><span class="menu-label">Record screen (scrcpy)</span></div>
+          <div class="menu-item"><span class="menu-num">41</span><span class="menu-label">Screenshot</span></div>
+          <div class="menu-item"><span class="menu-num">42</span><span class="menu-label">Multi screenshots</span></div>
+          <div class="menu-item"><span class="menu-num">43</span><span class="menu-label">Check scrcpy</span></div>
+          <div class="menu-item"><span class="menu-num">44</span><span class="menu-label">Active sessions</span></div>
+          <div class="menu-item"><span class="menu-num">45</span><span class="menu-label">Sync folder</span></div>
+        </div>
+        <div class="menu-card">
+          <h4>📶 WiFi Management (46-54)</h4>
+          <div class="menu-item"><span class="menu-num">46</span><span class="menu-label">Manual WiFi transfer</span></div>
+          <div class="menu-item"><span class="menu-num">47</span><span class="menu-label">Transfer all devices</span></div>
+          <div class="menu-item"><span class="menu-num">48</span><span class="menu-label">Quick WiFi setup</span></div>
+          <div class="menu-item"><span class="menu-num">49</span><span class="menu-label">WiFi status</span></div>
+          <div class="menu-item"><span class="menu-num">50</span><span class="menu-label">Disconnect WiFi</span></div>
+          <div class="menu-item"><span class="menu-num">51</span><span class="menu-label">Auto-reconnect</span></div>
+          <div class="menu-item"><span class="menu-num">52</span><span class="menu-label">Monitor Logcat</span></div>
+          <div class="menu-item"><span class="menu-num">53</span><span class="menu-label">Service status</span></div>
+          <div class="menu-item"><span class="menu-num">54</span><span class="menu-label">Settings</span></div>
+        </div>
+      </div>
+
+      <h3>Patrón común de todas las funciones <code>cmd_*</code></h3>
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="lang">python — ejemplo: cmd_battery()</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+        </div>
+        <pre><code><span class="kw">def</span> <span class="fn">cmd_battery</span>():
+    dev = <span class="fn">require_device</span>()      <span class="cm"># 1. Verificar que hay celular</span>
+    <span class="kw">if not</span> dev: <span class="fn">pause</span>(); <span class="kw">return</span>  <span class="cm"># 2. Salir si no hay</span>
+
+    _, out = <span class="fn">run_adb</span>(           <span class="cm"># 3. Ejecutar comando ADB</span>
+        <span class="st">"shell"</span>, <span class="st">"dumpsys"</span>, <span class="st">"battery"</span>,
+        device=dev
+    )
+    console.<span class="fn">print</span>(              <span class="cm"># 4. Mostrar resultado con rich</span>
+        <span class="fn">Panel</span>(out, title=<span class="st">"Batería"</span>, border_style=<span class="st">"green"</span>)
+    )
+    <span class="fn">pause</span>()                     <span class="cm"># 5. Esperar Enter para continuar</span></code></pre>
+      </div>
+    </section>
+
+    <!-- 9 -->
+    <section id="sec9">
+      <h2><span class="num">9</span>scrcpy — espejo sin lag</h2>
+      <p>
+        scrcpy captura el framebuffer del dispositivo Android, lo codifica en H.264/H.265
+        directamente en el GPU del celular y lo envía por ADB a la PC donde se decodifica
+        en tiempo real. Por eso no hay lag.
+      </p>
+      <div class="diagram">
+        <div class="flow">
+          <div class="flow-box warn">GPU del celular<br/><small>encode H.264</small></div>
+          <div class="arrow">→</div>
+          <div class="flow-box info">ADB over WiFi<br/><small>TCP/IP</small></div>
+          <div class="arrow">→</div>
+          <div class="flow-box highlight">GPU de la PC<br/><small>decode + render</small></div>
+        </div>
+      </div>
+      <h3>Opciones configurables del espejo</h3>
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="lang">shell — scrcpy con opciones</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+        </div>
+        <pre><code>scrcpy \
+  --video-bit-rate 8M  <span class="cm"># mayor = mejor calidad, más ancho de banda</span>
+  --max-fps 60         <span class="cm"># limitar FPS para ahorrar CPU</span>
+  --max-size 1920      <span class="cm"># resolución máxima</span>
+  --stay-awake         <span class="cm"># evita que el celular bloquee la pantalla</span>
+  --record salida.mp4  <span class="cm"># grabar la sesión simultáneamente</span>
+  --no-audio           <span class="cm"># deshabilitar audio si no se necesita</span></code></pre>
+      </div>
+      <div class="callout callout-success">
+        <div class="callout-title">✅ Requisito para el espejo</div>
+        scrcpy necesita que ADB esté conectado (USB o WiFi) pero <strong>no requiere root</strong>.
+        Solo activa <em>Depuración USB</em> en el celular.
+      </div>
+    </section>
+
+    <!-- 10 -->
+    <section id="sec10">
+      <h2><span class="num">10</span>Flujo completo de una sesión</h2>
+      <div class="diagram">
+        <div class="flow" style="flex-direction:column; gap:6px; align-items:flex-start; max-width:500px; margin:0 auto;">
+          <div class="flow-box highlight" style="width:100%">🚀 python phantom_droid.py</div>
+          <div class="arrow" style="align-self:center; transform:rotate(90deg)">↓</div>
+          <div class="flow-box info" style="width:100%">✅ Verificar ADB en el sistema</div>
+          <div class="arrow" style="align-self:center; transform:rotate(90deg)">↓</div>
+          <div class="flow-box info" style="width:100%">🔄 Lanzar watcher en hilo de fondo</div>
+          <div class="arrow" style="align-self:center; transform:rotate(90deg)">↓</div>
+          <div class="flow-box" style="width:100%">📋 Mostrar menú principal</div>
+          <div class="arrow" style="align-self:center; transform:rotate(90deg)">↓</div>
+          <div class="flow-box warn" style="width:100%">📱 Enchufas el celular por USB</div>
+          <div class="arrow" style="align-self:center; transform:rotate(90deg)">↓</div>
+          <div class="flow-box warn" style="width:100%">🔍 Watcher detecta nuevo serial</div>
+          <div class="arrow" style="align-self:center; transform:rotate(90deg)">↓</div>
+          <div class="flow-box warn" style="width:100%">📡 Obtiene IP → tcpip 5555 → connect</div>
+          <div class="arrow" style="align-self:center; transform:rotate(90deg)">↓</div>
+          <div class="flow-box highlight" style="width:100%">✅ "Puedes desconectar el USB"</div>
+          <div class="arrow" style="align-self:center; transform:rotate(90deg)">↓</div>
+          <div class="flow-box" style="width:100%">🎮 Usar cualquiera de las 54 opciones</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 11 -->
+    <section id="sec11">
+      <h2><span class="num">11</span>Cómo ejecutarlo</h2>
+
+      <h3>Requisitos en el celular</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h4>Activar Opciones de desarrollador</h4>
+            <p>Ajustes → Acerca del teléfono → toca 7 veces <em>Número de compilación</em></p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h4>Activar Depuración USB</h4>
+            <p>Ajustes → Opciones de desarrollador → Depuración USB → ON</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h4>Conectar a la misma red WiFi que la PC</h4>
+            <p>Imprescindible para el modo inalámbrico.</p>
+          </div>
+        </div>
+      </div>
+
+      <h3>Instalación de herramientas (Windows)</h3>
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="lang">powershell</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+        </div>
+        <pre><code><span class="cm"># 1. Instalar ADB (Android Platform Tools)</span>
+winget install Google.PlatformTools
+
+<span class="cm"># 2. Instalar scrcpy</span>
+winget install SoftDeluxe.scrcpy
+
+<span class="cm"># 3. Cerrar y reabrir la terminal (actualizar PATH)</span>
+
+<span class="cm"># 4. Instalar dependencia Python</span>
+pip install rich
+
+<span class="cm"># 5. Ejecutar el script</span>
+cd "C:\Users\Gernet\Desktop\proyecto android"
+python phantom_droid.py</code></pre>
+      </div>
+
+      <div class="callout callout-warn">
+        <div class="callout-title">⚠️ Importante después de instalar ADB</div>
+        Cierra y vuelve a abrir la terminal para que Windows reconozca el comando
+        <code>adb</code> en el PATH. De lo contrario el script dirá "ADB no encontrado".
+      </div>
+    </section>
+
+    <!-- 12 -->
+    <section id="sec12">
+      <h2><span class="num">12</span>Cuestionario de repaso</h2>
+
+      <div class="quiz">
+
+        <div class="quiz-q" id="q1">
+          <p>1. ¿Qué devuelve la función <code>run_adb()</code>?</p>
+          <div class="quiz-options">
+            <button class="quiz-opt" onclick="answer(this,'wrong','q1')">Solo el texto de salida como string</button>
+            <button class="quiz-opt" onclick="answer(this,'correct','q1')">Una tupla (bool, str) — éxito y texto</button>
+            <button class="quiz-opt" onclick="answer(this,'wrong','q1')">Un objeto subprocess.CompletedProcess</button>
+          </div>
+          <div class="quiz-feedback" id="q1-fb"></div>
+        </div>
+
+        <div class="quiz-q" id="q2">
+          <p>2. ¿Por qué el watcher usa <code>daemon=True</code>?</p>
+          <div class="quiz-options">
+            <button class="quiz-opt" onclick="answer(this,'wrong','q2')">Para que corra más rápido</button>
+            <button class="quiz-opt" onclick="answer(this,'wrong','q2')">Para que tenga prioridad sobre el hilo principal</button>
+            <button class="quiz-opt" onclick="answer(this,'correct','q2')">Para que se destruya automáticamente al cerrar el programa</button>
+          </div>
+          <div class="quiz-feedback" id="q2-fb"></div>
+        </div>
+
+        <div class="quiz-q" id="q3">
+          <p>3. ¿Qué comando ADB pone el celular en modo TCP para WiFi?</p>
+          <div class="quiz-options">
+            <button class="quiz-opt" onclick="answer(this,'wrong','q3')">adb connect 5555</button>
+            <button class="quiz-opt" onclick="answer(this,'correct','q3')">adb tcpip 5555</button>
+            <button class="quiz-opt" onclick="answer(this,'wrong','q3')">adb wifi enable</button>
+          </div>
+          <div class="quiz-feedback" id="q3-fb"></div>
+        </div>
+
+        <div class="quiz-q" id="q4">
+          <p>4. ¿Cuántos métodos de fallback usa <code>get_device_ip()</code>?</p>
+          <div class="quiz-options">
+            <button class="quiz-opt" onclick="answer(this,'wrong','q4')">1</button>
+            <button class="quiz-opt" onclick="answer(this,'wrong','q4')">2</button>
+            <button class="quiz-opt" onclick="answer(this,'correct','q4')">3</button>
+          </div>
+          <div class="quiz-feedback" id="q4-fb"></div>
+        </div>
+
+        <div class="quiz-q" id="q5">
+          <p>5. ¿Qué tecnología de video usa scrcpy para lograr baja latencia?</p>
+          <div class="quiz-options">
+            <button class="quiz-opt" onclick="answer(this,'wrong','q5')">MJPEG</button>
+            <button class="quiz-opt" onclick="answer(this,'correct','q5')">H.264 / H.265 codificado en el GPU del celular</button>
+            <button class="quiz-opt" onclick="answer(this,'wrong','q5')">VNC protocol</button>
+          </div>
+          <div class="quiz-feedback" id="q5-fb"></div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer>
+  <p>PhantomDroid-Py &nbsp;•&nbsp; Clase Cátedra &nbsp;•&nbsp;
+  Generado con <span>♥</span> para aprender Python y ADB</p>
+</footer>
+
+<script>
+// ─── Barra de progreso ───────────────────────────────────────
+window.addEventListener("scroll", () => {
+  const scrolled = window.scrollY;
+  const total    = document.documentElement.scrollHeight - window.innerHeight;
+  document.getElementById("progress-bar").style.width =
+    (total > 0 ? (scrolled / total) * 100 : 0) + "%";
+});
+
+// ─── Sidebar activo ──────────────────────────────────────────
+const sections = document.querySelectorAll("section[id]");
+const links    = document.querySelectorAll(".sidebar a");
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      links.forEach(l => l.classList.remove("active"));
+      const active = document.querySelector(`.sidebar a[href="#${e.target.id}"]`);
+      if (active) active.classList.add("active");
+    }
+  });
+}, { rootMargin: "-30% 0px -60% 0px" });
+
+sections.forEach(s => observer.observe(s));
+
+// ─── Copiar código ───────────────────────────────────────────
+function copyCode(btn) {
+  const pre  = btn.closest(".code-wrap").querySelector("pre");
+  const text = pre.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = "✓ Copiado";
+    btn.classList.add("copied");
+    setTimeout(() => {
+      btn.textContent = "Copiar";
+      btn.classList.remove("copied");
+    }, 2000);
+  });
+}
+
+// ─── Quiz interactivo ────────────────────────────────────────
+const feedback_msgs = {
+  correct: ["✅ ¡Correcto!", "✅ ¡Exacto!", "✅ ¡Muy bien!"],
+  wrong:   ["❌ No exactamente. Revisa la sección correspondiente.",
+            "❌ Incorrecto. Vuelve a leer el código.",
+            "❌ Casi, pero no. La respuesta correcta está resaltada en verde."]
+};
+
+function answer(btn, result, qid) {
+  const q    = document.getElementById(qid);
+  const opts = q.querySelectorAll(".quiz-opt");
+  const fb   = document.getElementById(qid + "-fb");
+
+  // Deshabilitar todas las opciones
+  opts.forEach(o => { o.disabled = true; o.style.cursor = "default"; });
+
+  btn.classList.add(result);
+
+  // Marcar correcta si eligió incorrecta
+  if (result === "wrong") {
+    opts.forEach(o => {
+      if (o.getAttribute("onclick").includes("'correct'")) {
+        o.classList.add("correct");
+      }
+    });
+  }
+
+  const pool = feedback_msgs[result];
+  fb.textContent = pool[Math.floor(Math.random() * pool.length)];
+  fb.className   = "quiz-feedback show " + (result === "correct" ? "ok" : "bad");
+}
+</script>
+</body>
+</html>
