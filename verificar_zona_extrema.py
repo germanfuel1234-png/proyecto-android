@@ -1,0 +1,65 @@
+#!/usr/bin/env python3
+"""
+Verificar qué contornos hay ESPECÍFICAMENTE en X>85%, Y>88%
+"""
+import cv2
+import numpy as np
+import subprocess
+
+def screenshot_adb():
+    try:
+        result = subprocess.run(
+            ['adb', 'exec-out', 'screencap', '-p'],
+            capture_output=True,
+            timeout=5
+        )
+        nparr = np.frombuffer(result.stdout, np.uint8)
+        return cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    except:
+        return None
+
+img = screenshot_adb()
+if img is None:
+    print("❌ No se pudo capturar pantalla")
+    exit(1)
+
+h, w = img.shape[:2]
+print(f"📱 Pantalla: {w}x{h}")
+
+# Búsqueda en esquina (X > 85%, Y > 88%)
+x_start = int(w * 0.85)
+y_start = int(h * 0.88)
+zone = img[y_start:, x_start:]
+
+print(f"🔍 Zona [{x_start}:{w}, {y_start}:{h}] = {zone.shape}\n")
+
+hsv = cv2.cvtColor(zone, cv2.COLOR_BGR2HSV)
+mask_white = cv2.inRange(hsv, np.array([0, 0, 210]), np.array([180, 40, 255]))
+
+kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+mask_white = cv2.morphologyEx(mask_white, cv2.MORPH_CLOSE, kernel)
+
+contours, _ = cv2.findContours(mask_white, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+print(f"Contornos encontrados: {len(contours)}")
+
+for i, cnt in enumerate(contours):
+    area = cv2.contourArea(cnt)
+    x, y, bw, bh = cv2.boundingRect(cnt)
+    aspect = max(bw, bh) / (min(bw, bh) + 1) if min(bw, bh) > 0 else 0
+    
+    M = cv2.moments(cnt)
+    if M["m00"] > 0:
+        cx_local = int(M["m10"] / M["m00"])
+        cy_local = int(M["m01"] / M["m00"])
+        cx_global = cx_local + x_start
+        cy_global = cy_local + y_start
+        
+        marker = ""
+        if 0.8 <= aspect <= 1.2:
+            marker += " ✓CUADRADO"
+        if 200 <= area <= 3000:
+            marker += " ✓TAMAÑO"
+        
+        print(f"[{i}] Área={area:.0f} AR={aspect:.2f} "
+              f"Local({cx_local}, {cy_local}) → Global({cx_global}, {cy_global}){marker}")

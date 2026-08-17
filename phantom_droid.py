@@ -31,6 +31,25 @@ def _auto_install():
 
 _auto_install()
 
+# ─── Refrescar PATH desde el registro de Windows (para detectar ADB recién instalado) ─
+if sys.platform == "win32":
+    import winreg
+    def _refresh_path():
+        paths = []
+        for hive, sub in [
+            (winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment"),
+            (winreg.HKEY_CURRENT_USER,  r"Environment"),
+        ]:
+            try:
+                with winreg.OpenKey(hive, sub) as k:
+                    val, _ = winreg.QueryValueEx(k, "Path")
+                    paths.append(val)
+            except FileNotFoundError:
+                pass
+        if paths:
+            os.environ["PATH"] = os.pathsep.join(paths) + os.pathsep + os.environ.get("PATH", "")
+    _refresh_path()
+
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
@@ -72,9 +91,38 @@ def _stdin_reader():
 #  NÚCLEO ADB
 # ══════════════════════════════════════════════════════════════════════════
 
+# Buscar ADB en múltiples ubicaciones
+_ADB_PATH = None
+def _find_adb():
+    """Busca ADB en múltiples ubicaciones."""
+    global _ADB_PATH
+    if _ADB_PATH:
+        return _ADB_PATH
+    
+    import shutil
+    # Buscar en PATH del sistema
+    adb = shutil.which("adb")
+    if adb:
+        _ADB_PATH = adb
+        return _ADB_PATH
+    
+    # Buscar en ubicaciones comunes
+    for path in [
+        "/tmp/platform-tools/adb",
+        os.path.expanduser("~/Android/platform-tools/adb"),
+        os.path.expanduser("~/Library/Android/sdk/platform-tools/adb"),
+        "/opt/android-sdk/platform-tools/adb",
+    ]:
+        if os.path.exists(path):
+            _ADB_PATH = path
+            return _ADB_PATH
+    
+    return "adb"  # fallback: asumir que está en PATH
+
 def run_adb(*args, device: str = None, timeout: int = 30) -> Tuple[bool, str]:
     """Ejecuta un comando ADB y devuelve (éxito, salida)."""
-    cmd = ["adb"]
+    adb_cmd = _find_adb()
+    cmd = [adb_cmd]
     if device:
         # -s <serial> le dice a ADB a qué dispositivo específico enviar el comando
         # (necesario cuando hay más de uno conectado al mismo tiempo)
@@ -94,7 +142,7 @@ def run_adb(*args, device: str = None, timeout: int = 30) -> Tuple[bool, str]:
         return False, "Timeout: el comando tardó demasiado."
     except FileNotFoundError:
         # FileNotFoundError ocurre cuando "adb" no existe en el PATH del sistema
-        return False, "ADB no encontrado. Instala Android Platform Tools y agrégalo al PATH."
+        return False, "ADB no encontrado. Instala Android Platform Tools o descárgalo desde https://developer.android.com/studio/releases/platform-tools"
 
 
 def get_devices() -> List[dict]:
@@ -793,7 +841,7 @@ def _scrcpy_ok() -> bool:
 
 def _scrcpy_hint():
     console.print("[bold red]❌ scrcpy no está instalado.[/]")
-    console.print("  Windows : [white]winget install SoftDeluxe.scrcpy[/]")
+    console.print("  Windows : [white]winget install Genymobile.scrcpy[/]")
     console.print("  Linux   : [white]sudo apt install scrcpy[/]")
     console.print("  macOS   : [white]brew install scrcpy[/]")
     console.print("  Manual  : [white]https://github.com/Genymobile/scrcpy/releases[/]")
@@ -804,8 +852,35 @@ def cmd_screen_mirror():
     if not dev: pause(); return
     if not _scrcpy_ok():
         _scrcpy_hint(); pause(); return
-    console.print("[bold green]🖥 Iniciando espejo de pantalla...[/]")
-    subprocess.run([_scrcpy_path(), "-s", dev], check=False)
+
+    # Verificar si hay USB físico disponible (aunque también haya WiFi activo)
+    usb_devs = [d for d in get_devices() if not d["wireless"] and d["status"] == "device"]
+    if usb_devs:
+        usb_serial = usb_devs[0]["serial"]
+        console.print(f"[bold green]🖥 Espejo por USB ({usb_serial}) — alta calidad[/]")
+        console.print("[dim]  • bitrate 16 Mbps  • 60 fps  • max-size 1920  • direct3d[/]")
+        cmd = [
+            _scrcpy_path(), "-s", usb_serial,
+            "--video-bit-rate", "16M",
+            "--max-fps",        "60",
+            "--max-size",       "1920",
+            "--no-audio",
+            "--stay-awake",
+        ]
+    else:
+        console.print("[bold yellow]🖥 Espejo por WiFi — modo reducido (rendimiento)[/]")
+        console.print("[dim]  • bitrate 4 Mbps  • 30 fps  • max-size 600  • direct3d[/]")
+        cmd = [
+            _scrcpy_path(), "-s", dev,
+            "--video-bit-rate", "4M",
+            "--max-fps",        "30",
+            "--max-size",       "600",
+            "--no-audio",
+        ]
+
+    if sys.platform == "win32":
+        cmd += ["--render-driver", "direct3d"]
+    subprocess.run(cmd, check=False)
     pause()
 
 
@@ -814,12 +889,14 @@ def cmd_screen_mirror_custom():
     if not dev: pause(); return
     if not _scrcpy_ok():
         _scrcpy_hint(); pause(); return
-    bitrate  = Prompt.ask("Bitrate video (Mbps)",           default="8")
-    maxfps   = Prompt.ask("FPS máximo",                     default="60")
-    maxsize  = Prompt.ask("Resolución máx en px (0=auto)",  default="0")
-    no_audio = Confirm.ask("¿Deshabilitar audio?",          default=False)
-    stay_on  = Confirm.ask("¿Mantener pantalla encendida?", default=True)
-    record   = Confirm.ask("¿Grabar la sesión?",            default=False)
+    bitrate  = Prompt.ask("Bitrate video (Mbps)",           default="4")
+    maxfps   = Prompt.ask("FPS máximo",                     default="30")
+    maxsize  = Prompt.ask("Resolución máx en px (0=auto)",  default="900")
+    no_audio    = Confirm.ask("¿Deshabilitar audio?",          default=True)
+    stay_on     = Confirm.ask("¿Mantener pantalla encendida?", default=True)
+    record      = Confirm.ask("¿Grabar la sesión?",            default=False)
+    render_d3d  = Confirm.ask("¿Usar render direct3d (mejor rendimiento en Windows)?",
+                              default=(sys.platform == "win32"))
 
     cmd = [_scrcpy_path(), "-s", dev,
            "--video-bit-rate", f"{bitrate}M",
@@ -830,6 +907,8 @@ def cmd_screen_mirror_custom():
         cmd += ["--no-audio"]
     if stay_on:
         cmd += ["--stay-awake"]
+    if render_d3d:
+        cmd += ["--render-driver", "direct3d"]
     if record:
         fname = Prompt.ask("Nombre del archivo", default="grabacion.mp4")
         cmd  += ["--record", fname]
